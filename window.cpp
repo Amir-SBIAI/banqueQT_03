@@ -10,7 +10,7 @@
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlError>
 #include <QtSql/QSqlQuery>
-
+#include <QtDebug>
 
 Window::Window(QWidget *parent)
     : QWidget(parent),
@@ -66,10 +66,12 @@ void Window::onConnectButtonClicked() {
     Compte *compte1 = new Compte("FR1234", 5000, client1);
     Compte *compte2 = new Compte("FR5678", 5000, client2);
 
-
     // Vérification des identifiants
     if (id == "Amir" && password == "1234") {
         compteActif = compte1;
+
+        // Fermer la fenêtre actuelle avant d'ouvrir une nouvelle
+        this->close();
 
         QWidget *newWindow = new QWidget;
         newWindow->setWindowTitle("MENU DU COMPTE");
@@ -77,11 +79,17 @@ void Window::onConnectButtonClicked() {
 
         QVBoxLayout *layout = new QVBoxLayout;
 
+        // Ajouter un label pour afficher le solde du compte actif, centré et avec une taille de police plus grande
+                QLabel *soldeLabel = new QLabel(tr("Solde actuel: %1").arg(compteActif->getSolde()));
+                soldeLabel->setAlignment(Qt::AlignCenter);  // Centrer le texte
+                soldeLabel->setStyleSheet("font-size: 24px; font-weight: bold;");  // Augmenter la taille de la police et la rendre en gras
+                layout->addWidget(soldeLabel);  // Ajouter le label en haut de la fenêtre
+
         QPushButton *CrediterButton = new QPushButton(tr("Crediter"));
         QPushButton *DebiterButton = new QPushButton(tr("Debiter"));
         QPushButton *TransfertButton = new QPushButton(tr("Transfert"));
         QPushButton *InfosButton = new QPushButton(tr("Afficher Infos"));
-        QPushButton *quitButton = new QPushButton(tr("Quitter"));
+        QPushButton *quitButton = new QPushButton(tr("Deconnexion"));
 
         layout->addWidget(CrediterButton);
         layout->addWidget(DebiterButton);
@@ -100,6 +108,9 @@ void Window::onConnectButtonClicked() {
     } else if (id == "Slim" && password == "5678") {
         compteActif = compte2;
 
+        // Fermer la fenêtre actuelle avant d'ouvrir une nouvelle
+        this->close();
+
         QWidget *newWindow = new QWidget;
         newWindow->setWindowTitle("MENU DU COMPTE");
         newWindow->resize(400, 300);
@@ -110,7 +121,7 @@ void Window::onConnectButtonClicked() {
         QPushButton *DebiterButton = new QPushButton(tr("Debiter"));
         QPushButton *TransfertButton = new QPushButton(tr("Transfert"));
         QPushButton *InfosButton = new QPushButton(tr("Afficher Infos"));
-        QPushButton *quitButton = new QPushButton(tr("Quitter"));
+        QPushButton *quitButton = new QPushButton(tr("Deconnexion       "));
 
         layout->addWidget(CrediterButton);
         layout->addWidget(DebiterButton);
@@ -126,47 +137,35 @@ void Window::onConnectButtonClicked() {
 
         newWindow->setLayout(layout);
         newWindow->show();
-
-
    } else {
         QMessageBox::warning(this, tr("Erreur de connexion"), tr("Identifiants ou mot de passe incorrects."));
     }
 }
 
 void Window::openCrediterPage() {
-    // Créer la fenêtre de créditer
     QWidget *creditWindow = new QWidget;
-    //QVBoxLayout *layout = new QVBoxLayout;
-
-    //A CORRIGER
-
     creditWindow->setWindowTitle("CREDITER");
     creditWindow->resize(400, 300);
 
-    // créditer
     QLabel *amountLabel = new QLabel(tr("Entrez le montant à créditer :"));
     QLineEdit *amountLineEdit = new QLineEdit;
     amountLineEdit->setPlaceholderText("Montant");
 
-    // btn créditer
     QPushButton *creditButton = new QPushButton(tr("Créditer"));
     connect(creditButton, &QPushButton::clicked, [this, amountLineEdit]() {
         bool ok;
-        double montant = amountLineEdit->text().toDouble(&ok);  // Conversion du texte en double
+        double montant = amountLineEdit->text().toDouble(&ok);
         if (ok && montant > 0) {
             if (compteActif) {
-                  compteActif->Crediter(montant);  // Appeler la méthode de crédit du compte actif
+                compteActif->Crediter(montant);
 
-                            // msg confirmation
-                     QMessageBox::information(nullptr, tr("Crédit effectué"), tr("Le montant a été crédité avec succès."));
-                 }
-               } else {
-                   // msg erreur
-                      QMessageBox::warning(nullptr, tr("Erreur"), tr("Veuillez entrer un montant valide."));
-                    }
-                });
+                QMessageBox::information(nullptr, tr("Crédit effectué"), tr("Le montant a été crédité avec succès."));
+            }
+        } else {
+            QMessageBox::warning(nullptr, tr("Erreur"), tr("Veuillez entrer un montant valide."));
+        }
+    });
 
-    // Layout pour la fenêtre de créditer
     QVBoxLayout *layout = new QVBoxLayout;
     layout->addWidget(amountLabel);
     layout->addWidget(amountLineEdit);
@@ -177,42 +176,33 @@ void Window::openCrediterPage() {
 }
 
 void Window::openDebiterPage() {
-    // Créer la fenêtre de débiter
     QWidget *debitWindow = new QWidget;
     debitWindow->setWindowTitle("DEBITER");
     debitWindow->resize(400, 300);
 
-    // débiter
     QLabel *amountLabel = new QLabel(tr("Entrez le montant à débiter :"));
     QLineEdit *amountLineEdit = new QLineEdit;
     amountLineEdit->setPlaceholderText("Montant");
 
-    // btn débiter
     QPushButton *debitButton = new QPushButton(tr("Débiter"));
     connect(debitButton, &QPushButton::clicked, [this, amountLineEdit]() {
         bool ok;
         double montant = amountLineEdit->text().toDouble(&ok);
         if (ok && montant > 0) {
             if (compteActif) {
-                // Vérification si le montant à débiter est inférieur ou égal au solde
                 if (compteActif->getSolde() >= montant) {
-                    compteActif->Debiter(montant);  // apl de la fonction débit
+                    compteActif->Debiter(montant);
 
-
-                    // msg confirmation
                     QMessageBox::information(nullptr, tr("Débit effectué"), tr("Le montant a été débité avec succès."));
                 } else {
-                    // Si le solde est insuffisant
                     QMessageBox::warning(nullptr, tr("Erreur"), tr("Solde insuffisant pour effectuer le débit."));
                 }
             }
         } else {
-            // msg erreur
             QMessageBox::warning(nullptr, tr("Erreur"), tr("Veuillez entrer un montant valide."));
         }
     });
 
-    // Layout pour la fenêtre de débiter
     QVBoxLayout *layout = new QVBoxLayout;
     layout->addWidget(amountLabel);
     layout->addWidget(amountLineEdit);
@@ -319,6 +309,8 @@ void Window::openInfosPage() {
     infosWindow->show();
 }
 
+
+
 bool Window::connectToDatabase() {
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
     db.setHostName("localhost");
@@ -332,7 +324,7 @@ bool Window::connectToDatabase() {
     }
     return true;
 }
-bool updateClientInformation(int clientId, const QString& newName, double newBalance) {
+bool Window::updateClientInformation(int clientId, const QString& newName, double newBalance) {
     QSqlQuery query;
     query.prepare("UPDATE clients SET name = :name, balance = :balance WHERE id = :id");
     query.bindValue(":name", newName);
