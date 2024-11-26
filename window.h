@@ -3,6 +3,9 @@
 
 #include <QWidget>
 #include "compte.h"
+#include <QTabWidget>
+#include <QLabel>
+
 
 QT_BEGIN_NAMESPACE
 class QLineEdit;
@@ -26,6 +29,8 @@ private slots:
     void openTransfertPage();
     void openInfosPage();
 
+    //QTabWidget *widget_onglets = new QTabWidget;
+
 private:
     QLineEdit *idLineEdit;
     QLineEdit *passwordLineEdit;
@@ -36,6 +41,9 @@ private:
 
     Compte *compteActif; // Le compte actif une fois connecté
     Compte *compteActif1;
+    QWidget *currentWindow;
+    QLabel *soldeLabel;  // Déclaration du QLabel pour afficher le solde
+
 
     bool connectToDatabase();
     // Fonction pour mettre à jour les informations d'un client
